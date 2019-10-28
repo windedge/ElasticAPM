@@ -1,0 +1,43 @@
+version: '2.2'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
+    container_name: es
+    environment:
+      - cluster.name=oms-apm
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms6g -Xmx6g
+      - xpack.security.enabled=false
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+    networks:
+      - esnet     
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.3.2
+    ports:
+      - 80:5601
+    networks:
+      - esnet      
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:7.3.2
+    ports:
+      - 8200:8200
+    networks:
+      - esnet      
+    environment:
+      - output.elasticsearch.hosts=['http://elasticsearch:9200']
+      - apm-server.host="0.0.0.0:8200"
+      - setup.kibana.host="kibana:5601"
+      - setup.template.enabled=true
+      - logging.to_files=false
+    volumes:
+      - ${PWD}/apm-server.yml:/usr/share/apm-server/apm-server.yml      
+volumes:
+  esdata:
+    driver: local      
+networks:
+  esnet:
