@@ -1,13 +1,13 @@
 version: '2.2'
+
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
-    container_name: es
+    image:  windedge/elasticsearch-analysis-ik:7.8.0
     environment:
       - cluster.name=oms-apm
       - discovery.type=single-node
       - bootstrap.memory_lock=true
-      - ES_JAVA_OPTS=-Xms6g -Xmx6g
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
       - xpack.security.enabled=false
     volumes:
       - esdata:/usr/share/elasticsearch/data
@@ -15,19 +15,19 @@ services:
       - 9200:9200
       - 9300:9300
     networks:
-      - esnet     
+      - esnet
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.3.2
+    image: docker.elastic.co/kibana/kibana:7.8.0
     ports:
       - 5601:5601
     networks:
-      - esnet      
+      - esnet
   apm-server:
-    image: docker.elastic.co/apm/apm-server:7.3.2
+    image: docker.elastic.co/apm/apm-server:7.8.0
     ports:
       - 8200:8200
     networks:
-      - esnet      
+      - esnet
     environment:
       - output.elasticsearch.hosts=['http://elasticsearch:9200']
       - apm-server.host="0.0.0.0:8200"
@@ -35,9 +35,12 @@ services:
       - setup.template.enabled=true
       - logging.to_files=false
     volumes:
-      - ${PWD}/apm-server.yml:/usr/share/apm-server/apm-server.yml      
+      - ${PWD}/apm-server.yml:/usr/share/apm-server/apm-server.yml
 volumes:
   esdata:
-    driver: local      
+    driver_opts:
+      type: None
+      device: ${PWD}/esdata
+      o: bind
 networks:
   esnet:
